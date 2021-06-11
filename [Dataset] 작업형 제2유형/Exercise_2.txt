@@ -1,0 +1,50 @@
+# 출력을 원하실 경우 print() 활용
+# 예) print(df.head())
+
+# 답안 제출 예시
+# 수험번호.csv 생성
+# DataFrame.to_csv("0000.csv", index=False)
+
+X_test_path = 'data/X_test.csv'
+X_train_path = 'data/X_train.csv'
+y_train_path = 'data/y_train.csv'
+y_test_path = '수험번호.csv'
+
+import pandas as pd
+
+X_test = pd.read_csv(X_test_path)
+X_train = pd.read_csv(X_train_path)
+y_train = pd.read_csv(y_train_path)
+
+# 환불금액 has nulls  ->  turn them into 0
+X_train['환불금액'] = X_train['환불금액'].fillna(0)
+X_test['환불금액'] = X_test['환불금액'].fillna(0)
+
+# 주구매상품, 주구매지점 should be turned into numbers
+from sklearn.preprocessing import LabelEncoder
+
+X_train.loc[:,['주구매상품', '주구매지점']] = \
+X_train.loc[:,['주구매상품', '주구매지점']].apply(LabelEncoder().fit_transform)
+
+X_test.loc[:,['주구매상품', '주구매지점']] = \
+X_test.loc[:,['주구매상품', '주구매지점']].apply(LabelEncoder().fit_transform)
+
+# Remove first columns(cust_id)
+cust_id = X_test['cust_id']
+X_train = X_train.iloc[:,1:]
+X_test = X_test.iloc[:,1:]
+y_train = y_train['gender']
+
+from sklearn import linear_model
+
+model = linear_model.LogisticRegression()
+model.fit(X = X_train, y = y_train)
+
+# print('model score : ',model.score(X = X_train, y = y_train))
+
+import numpy as np
+
+df_res = pd.DataFrame(model.predict_proba(X=X_test), columns=['0','1'])
+df_res = pd.DataFrame(np.c_[cust_id, df_res['1']], columns=['custid','gender'])
+
+df_res.to_csv('수험번호.csv')
